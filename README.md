@@ -51,7 +51,7 @@ We rely on the **Valentine** benchmark (TPC-DI, ChEMBL, OpenData, Wikidata, Mage
 Official release: **[Valentine on Zenodo](https://zenodo.org/records/5084605#.YOgWHBMzY-Q)**
 
 We also publish our **generated meta-spaces** and **paper results** (per-RQ):  
-**[Google Drive — article results](https://drive.google.com/drive/folders/1rquleNm07QSezVbPjG9s2yj7ebjJF_nF?usp=sharing)**
+**[Google Drive — article results](https://drive.google.com/drive/folders/1YgAXzpRy8__UqUHY833qkQcPXbDnEcOd?usp=sharing)**
 
 
 Drive organization (as used in the paper):
