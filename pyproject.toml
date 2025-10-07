@@ -1,0 +1,41 @@
+[project]
+name = "metamatch"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+authors = [{name = "user28060"}]
+
+dependencies = [
+  "numpy==1.24.4",
+  "scipy==1.10.1",
+  "torch==2.2.2",
+  "torchvision==0.17.2",
+  "pandas==1.5.3",
+  "matplotlib>=3.10.6,<4.0.0",
+  "ripser>=0.6.12,<0.7.0",
+  "persim>=0.3.8,<0.4.0",
+  "gudhi>=3.11.0,<4.0.0",
+  "sentence-transformers>=5.1.1,<6.0.0",
+  "transformers>=4.57.0,<5.0.0",
+  "huggingface-hub>=0.35.3,<0.36.0",
+  "sentencepiece>=0.2.1,<0.3.0",
+  "nltk>=3.9.2,<4.0.0",
+  "xgboost>=3,<4",
+  "catboost>=1.2,<2"
+]
+
+[project.scripts]
+MetaMatch = "meta_space.pipeline:meta_match"
+MetaLearn = "Meta_learner.train:meta_learn"
+
+# Spécifique à Poetry : où se trouvent les packages (src layout personnalisé)
+[tool.poetry]
+packages = [
+  { include = "meta_space",   from = "MetaMatch/src" },
+  { include = "Meta_learner", from = "MetaMatch/src" }
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,38 @@
+# -----------------------
+# OS / IDE / Python
+# -----------------------
+.DS_Store
+*.swp
+*.swo
+*.log
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.venv*/
+venv/
+.env
+.env.*
+
+.vscode/
+.idea/
+
+# -----------------------
+# Projet
+# -----------------------
+
+# Tout ignorer dans Experimentation…
+Experimentation/*
+
+# …sauf Datasets (et tout son contenu)
+!Experimentation/Datasets/
+!Experimentation/Datasets/**
+
+# Logs CatBoost (à la racine)
+catboost_info/
+
+# (Optionnel) Si tu as par erreur un dossier nested "MetaMatch/" à la racine
+# MetaMatch/
