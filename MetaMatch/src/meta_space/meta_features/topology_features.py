@@ -4,7 +4,11 @@ from persim.persistent_entropy import persistent_entropy
 from gudhi import RipsComplex
 from gudhi.bottleneck import bottleneck_distance
 from gudhi.wasserstein import wasserstein_distance
-
+import warnings
+warnings.filterwarnings(
+    "ignore",
+    message="The input point cloud has more columns than rows; did you mean to transpose\\?",
+)
 def vector_to_point_cloud(v, window_size=5):
     return np.array([v[i:i+window_size] for i in range(len(v) - window_size)])
 

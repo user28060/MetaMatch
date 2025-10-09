@@ -79,7 +79,7 @@ Experimentation/
 
 ## System requirements
 
-- **Python:** 3.11+
+- **Python:** 3.11
 - **OS:** macOS or Linux (CPU-only is fine)
 - **Poetry** for packaging & virtualenvs
 - Optional: **xgboost** and **catboost** (for the extra classifiers)
