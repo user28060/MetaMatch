@@ -37,7 +37,7 @@ def load_golden_as_df(
         return pd.json_normalize(golden)
     if isinstance(golden, pd.DataFrame):
         return golden.copy()
-    raise TypeError("golden must be a JSON path, list/dict, or DataFrame.")
+    raise TypeError("golden must be a JSON path, list/dict, or DataFraame.")
 
 
 def _pick_col(df: pd.DataFrame, key: str, *aliases: str) -> str | None:

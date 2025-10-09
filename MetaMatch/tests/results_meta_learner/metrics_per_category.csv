@@ -1,0 +1,2 @@
+Classifier,Category,n_test,precision,recall,f1
+CatBoost,Magellan,4,1.0,1.0,1.0

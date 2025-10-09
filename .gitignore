@@ -16,23 +16,30 @@ build/
 venv/
 .env
 .env.*
-
 .vscode/
 .idea/
 
 # -----------------------
-# Projet
+# Project
 # -----------------------
 
-# Tout ignorer dans Experimentation…
+# Ignore tout sous Experimentation…
 Experimentation/*
 
-# …sauf Datasets (et tout son contenu)
-!Experimentation/Datasets/
+# …mais ré-autorise le dossier et la traversée des sous-dossiers
+!Experimentation/
+!Experimentation/**/
+
+# Garde uniquement ces notebooks précis
+!Experimentation/RQ1_Effectiveness/effectiveness.ipynb
+!Experimentation/RQ2_Effeciency/Effeciency.ipynb
+!Experimentation/RQ3_Feature_importance/FeatureImportance.ipynb
+!Experimentation/RQ4_Feature_Selection/feature_selection.ipynb
+!Experimentation/RQ5_Baseline/baseline.ipynb
+
+# Garde le dossier Datasets mais PAS les CSV
 !Experimentation/Datasets/**
+Experimentation/MetaSpace/*
 
-# Logs CatBoost (à la racine)
+# Toujours ignorer ce dossier
 catboost_info/
-
-# (Optionnel) Si tu as par erreur un dossier nested "MetaMatch/" à la racine
-# MetaMatch/

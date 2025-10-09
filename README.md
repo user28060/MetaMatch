@@ -179,9 +179,9 @@ Options:
 ```bash
 poetry run MetaMatch \
   --dataset amazon_google_exp \
-  --source-csv "/path/to/Experimentation/Datasets/Magellan/Unionable/amazon_google_exp/amazon_google_exp_source.csv" \
-  --target-csv "/path/to/Experimentation/Datasets/Magellan/Unionable/amazon_google_exp/amazon_google_exp_target.csv" \
-  --golden-json "/path/to/Experimentation/Datasets/Magellan/Unionable/amazon_google_exp/amazon_google_exp_mapping.json" \
+  --source-csv "Experimentation/Datasets/Magellan/Unionable/amazon_google_exp/amazon_google_exp_source.csv" \
+  --target-csv "Experimentation/Datasets/Magellan/Unionable/amazon_google_exp/amazon_google_exp_target.csv" \
+  --golden-json "Experimentation/Datasets/Magellan/Unionable/amazon_google_exp/amazon_google_exp_mapping.json" \
   --model all-MiniLM-L6-v2
 ```
 
@@ -197,7 +197,7 @@ poetry run MetaMatch \
 **List available classifiers**
 
 ```bash
-poetry run MetaLearn --features-csv tests/results_meta_space/Meta_Space__amazon_google_exp__all-MiniLM-L6-v2.csv --list-classifiers
+poetry run MetaLearn --features-csv Experimentation/Datasets/Magellan/Unionable/amazon_google_exp/amazon_google_exp_source.csv  --list-classifiers
 ```
 
 Example list:
@@ -236,8 +236,8 @@ Options:
 
 ```bash
 poetry run MetaLearn \
-  --features-csv "./tests/results_meta_space/Meta_Space__amazon_google_exp__all-MiniLM-L6-v2.csv" \
-  --classifier XGBoost \
+  --features-csv "MetaMatch/tests/results_meta_space/Meta_Space__amazon_google_exp__all-MiniLM-L6-v2.csv" \
+  --classifier CatBoost \
   --split by-dataset \
   --test-size 0.3 \
   --seed 42 \

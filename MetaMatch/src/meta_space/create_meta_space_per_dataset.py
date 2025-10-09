@@ -9,36 +9,27 @@ if str(ROOT) not in sys.path:
 
 import pandas as pd
 import numpy as np
+from pathlib import Path
+import json
+
 
 # === tes imports existants (features) ===
 from MetaMatch.src.meta_space.spectral_features import compute_spectral_metrics_for_all
 from MetaMatch.src.meta_space.topology_features import compute_topological_metrics, vector_to_point_cloud
 from MetaMatch.src.meta_space.classical_distances import compute_classical_distances
 from MetaMatch.src.meta_space.syntax_string_features import compute_syntax_string_features
-
+from MetaMatch.src.meta_space.golden_tools import load_golden_as_df
 # === embeddings ===
-# Utilise Sentence-Transformers par défaut ; accepte aussi des checkpoints HF (bert, distilbert, bart, etc.)
 from sentence_transformers import SentenceTransformer
 import torch
 
 
-# ------------------------------------------------------------
-# 1) Helpers: chargement & normalisation
-# ------------------------------------------------------------
 def _read_csv_any(path: str | Path) -> pd.DataFrame:
     path = Path(path)
     if not path.exists():
         raise FileNotFoundError(f"Fichier introuvable: {path}")
-    # On essaie ; si séparateur exotique, laisse l’utilisateur adapter
     return pd.read_csv(path)
 
-from pathlib import Path
-import json
-import pandas as pd
-
-from pathlib import Path
-import json
-import pandas as pd
 
 def _norm(s):
     return str(s).strip().lower() if s is not None else ""
@@ -112,7 +103,6 @@ def golden_matrix(
 
     st_req, tt_req = _norm(source_table), _norm(target_table)
 
-    # set des paires (src_col, tgt_col) présentes dans le golden pour ces tables
     pairs = set()
     for item in (data if isinstance(data, list) else [data]):
         m = (item or {}).get("matches", {})
@@ -121,7 +111,6 @@ def golden_matrix(
             if sc and tc:
                 pairs.add((sc, tc))
 
-    # construit la matrice 0/1
     rows = [str(a) for a in source_attrs]
     cols = [str(b) for b in target_attrs]
     M = pd.DataFrame(0, index=rows, columns=cols, dtype=int)
@@ -139,9 +128,6 @@ def _normalize(x: np.ndarray, eps: float = 1e-9) -> np.ndarray:
     return x / norms
 
 
-# ------------------------------------------------------------
-# 2) Construction de texte de colonne → embedding
-# ------------------------------------------------------------
 def build_column_texts(
     df: pd.DataFrame,
     colnames: list[str] | None = None,
@@ -209,7 +195,6 @@ def embed_texts(
     if normalize:
         X = _normalize(X)
 
-    # colonnes = dim_0 ... dim_{d-1}
     cols = [f"dim_{i}" for i in range(X.shape[1])]
     df_emb = pd.DataFrame(X, index=keys, columns=cols)
     return df_emb
@@ -241,9 +226,7 @@ def pick_model_checkpoint(alias: str) -> str:
     return alias
 
 
-# ------------------------------------------------------------
-# 3) compute_distances (corrigée: return après les boucles)
-# ------------------------------------------------------------
+
 def compute_distances(
     embedd_ds1: pd.DataFrame,        # lignes = attributs source, colonnes = dims
     embedd_ds2: pd.DataFrame,        # lignes = attributs target, colonnes = dims
@@ -329,9 +312,7 @@ def compute_distances(
     return df_result
 
 
-# ------------------------------------------------------------
-# 4) Orchestrateur: run_for_dataset (path1, path2, path3 + model + dataset)
-# ------------------------------------------------------------
+
 def run_for_dataset(
     dataset_name: str,
     path1: str | Path,
@@ -348,13 +329,11 @@ def run_for_dataset(
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # 1) Lecture
     df_src = _read_csv_any(path1)
     df_tgt = _read_csv_any(path2)
-    golden = _load_golden(path3) if path3 else pd.DataFrame()
+    golden = load_golden_as_df(path3) if path3 else pd.DataFrame()
     print(golden)
 
-    # 2) Textes → embeddings
     model_ckpt = pick_model_checkpoint(embedding_model)
 
     texts_src = build_column_texts(df_src, n_samples_per_col=n_samples_per_col)
@@ -363,7 +342,6 @@ def run_for_dataset(
     emb_src = embed_texts(texts_src, model_name=model_ckpt, device=device, normalize=True)
     emb_tgt = embed_texts(texts_tgt, model_name=model_ckpt, device=device, normalize=True)
 
-    # 3) Distances + meta-features
     inter_csv = out_dir / f"inter_{dataset_name}__{relation}__{Path(path1).stem}__{Path(path2).stem}__{embedding_model}.csv"
     df_features = compute_distances(
         embedd_ds1=emb_src,
@@ -377,18 +355,14 @@ def run_for_dataset(
         flush_every=2000,
     )
 
-    # 4) Sauvegarde finale
     out_csv = out_dir / f"Meta_Space__{dataset_name}__{embedding_model}.csv"
     df_features.to_csv(out_csv, index=False)
     print(f"[OK] Résultats écrits: {out_csv}")
     return df_features
 
 
-# ------------------------------------------------------------
-# 5) Exemple d'appel
-# ------------------------------------------------------------
+
 if __name__ == "__main__":
-    # Exemple: adapte les chemins
     DATASET = "amazon_google_exp"
     PATH1 = str(ROOT/ "Experimentation"/"Datasets"/"Magellan"/"Unionable"/"amazon_google_exp"/"amazon_google_exp_source.csv")
     PATH2 = str(ROOT/ "Experimentation"/"Datasets"/"Magellan"/"Unionable"/"amazon_google_exp"/"amazon_google_exp_target.csv")
@@ -398,8 +372,8 @@ if __name__ == "__main__":
         dataset_name=DATASET,
         path1=PATH1,
         path2=PATH2,
-        path3=PATH3,                 # JSON pris en charge
-        embedding_model="all-MiniLM-L6-v2",  # ou "bert", "distilbert", "BAAI/bge-base-en-v1.5", etc.
+        path3=PATH3,                 
+        embedding_model="all-MiniLM-L6-v2",  # ou "bert", "distilbert", etc.
         out_dir=HERE.parent[3] / "MetaMatch/tests/results_meta_space",
         n_samples_per_col=20,
         category="Magellan",

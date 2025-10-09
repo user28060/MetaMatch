@@ -1,0 +1,2 @@
+Classifier,n_train,n_test,accuracy,precision,recall,f1,roc_auc
+CatBoost,12,4,1.0,1.0,1.0,1.0,1.0
