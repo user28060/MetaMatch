@@ -92,14 +92,11 @@ Experimentation/
 git clone https://github.com/user28060/MetaMatch.git
 cd MetaMatch
 
-# (optional) pin Python 3.11 for the venv
 poetry env use python3.11
 
 # install project & dependencies
 poetry install
 
-# add optional learners if needed
-poetry add xgboost catboost
 ````
 
 If you later edit console scripts, re-run `poetry install`.
@@ -240,7 +237,6 @@ poetry run MetaLearn \
   --classifier CatBoost \
   --split by-dataset \
   --test-size 0.3 \
-  --seed 42 \
   --out-dir "./tests/meta_learner"
 ```
 

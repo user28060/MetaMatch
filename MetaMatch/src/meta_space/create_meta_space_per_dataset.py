@@ -1,27 +1,31 @@
 # -*- coding: utf-8 -*-
-import sys, time, math
+import sys
+import time
 from pathlib import Path
+
 HERE = Path(__file__).resolve()
 
 ROOT = HERE.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-import pandas as pd
-import numpy as np
-from pathlib import Path
 import json
+from pathlib import Path
 
+import numpy as np
+import pandas as pd
+import torch
+
+# === embeddings ===
+from sentence_transformers import SentenceTransformer
+
+from MetaMatch.src.meta_space.classical_distances import compute_classical_distances
+from MetaMatch.src.meta_space.golden_tools import load_golden_as_df
 
 # === tes imports existants (features) ===
 from MetaMatch.src.meta_space.spectral_features import compute_spectral_metrics_for_all
-from MetaMatch.src.meta_space.topology_features import compute_topological_metrics, vector_to_point_cloud
-from MetaMatch.src.meta_space.classical_distances import compute_classical_distances
 from MetaMatch.src.meta_space.syntax_string_features import compute_syntax_string_features
-from MetaMatch.src.meta_space.golden_tools import load_golden_as_df
-# === embeddings ===
-from sentence_transformers import SentenceTransformer
-import torch
+from MetaMatch.src.meta_space.topology_features import compute_topological_metrics, vector_to_point_cloud
 
 
 def _read_csv_any(path: str | Path) -> pd.DataFrame:
@@ -33,6 +37,7 @@ def _read_csv_any(path: str | Path) -> pd.DataFrame:
 
 def _norm(s):
     return str(s).strip().lower() if s is not None else ""
+
 
 def load_golden_pairs(golden_path_or_obj, bidirectional=True):
     """
@@ -65,8 +70,12 @@ def load_golden_pairs(golden_path_or_obj, bidirectional=True):
                 pairs.add((tt, tc, st, sc))
     return pairs
 
-def mark_true_match(df: pd.DataFrame, pairs: set,
-                    cols=("source_table","source_column","target_table","target_column")):
+
+def mark_true_match(
+    df: pd.DataFrame,
+    pairs: set,
+    cols=("source_table", "source_column", "target_table", "target_column"),
+):
     st, sc, tt, tc = cols
     # colonnes normalisées pour comparer proprement
     df["_st"] = df[st].map(_norm)
@@ -74,15 +83,13 @@ def mark_true_match(df: pd.DataFrame, pairs: set,
     df["_tt"] = df[tt].map(_norm)
     df["_tc"] = df[tc].map(_norm)
 
-    df["true_match"] = [
-        1 if (row._st, row._sc, row._tt, row._tc) in pairs else 0
-        for row in df.itertuples(index=False)
-    ]
-    return df.drop(columns=["_st","_sc","_tt","_tc"])
+    df["true_match"] = [1 if (row._st, row._sc, row._tt, row._tc) in pairs else 0 for row in df.itertuples(index=False)]
+    return df.drop(columns=["_st", "_sc", "_tt", "_tc"])
 
 
 def _norm(s):  # normalisation simple
     return str(s).strip().lower() if s is not None else ""
+
 
 def golden_matrix(
     golden_json_path_or_obj,
@@ -104,7 +111,7 @@ def golden_matrix(
     st_req, tt_req = _norm(source_table), _norm(target_table)
 
     pairs = set()
-    for item in (data if isinstance(data, list) else [data]):
+    for item in data if isinstance(data, list) else [data]:
         m = (item or {}).get("matches", {})
         if _norm(m.get("source_table")) == st_req and _norm(m.get("target_table")) == tt_req:
             sc, tc = _norm(m.get("source_column")), _norm(m.get("target_column"))
@@ -120,6 +127,7 @@ def golden_matrix(
             if (_norm(r), _norm(c)) in pairs:
                 M.at[r, c] = 1
     return M
+
 
 def _normalize(x: np.ndarray, eps: float = 1e-9) -> np.ndarray:
     # L2 normalize rows
@@ -187,8 +195,13 @@ def embed_texts(
 
     embs = []
     for start in range(0, len(texts), batch_size):
-        chunk = texts[start:start+batch_size]
-        E = model.encode(chunk, convert_to_numpy=True, show_progress_bar=False, normalize_embeddings=False)
+        chunk = texts[start : start + batch_size]
+        E = model.encode(
+            chunk,
+            convert_to_numpy=True,
+            show_progress_bar=False,
+            normalize_embeddings=False,
+        )
         embs.append(E)
     X = np.vstack(embs)
 
@@ -226,17 +239,16 @@ def pick_model_checkpoint(alias: str) -> str:
     return alias
 
 
-
 def compute_distances(
-    embedd_ds1: pd.DataFrame,        # lignes = attributs source, colonnes = dims
-    embedd_ds2: pd.DataFrame,        # lignes = attributs target, colonnes = dims
-    golden_matrix: pd.DataFrame,     # G : lignes = noms source, colonnes = noms target (binaire 0/1)
+    embedd_ds1: pd.DataFrame,  # lignes = attributs source, colonnes = dims
+    embedd_ds2: pd.DataFrame,  # lignes = attributs target, colonnes = dims
+    golden_matrix: pd.DataFrame,  # G : lignes = noms source, colonnes = noms target (binaire 0/1)
     Category: str,
     Relation: str,
     Dataset: str,
     Model: str,
-    inter_csv_path: str = str(ROOT / "Experimentation" /"tests"/"results_meta_space"/"intermediaire.csv"),
-    flush_every: int = 1000
+    inter_csv_path: str = str(ROOT / "Experimentation" / "tests" / "results_meta_space" / "intermediaire.csv"),
+    flush_every: int = 1000,
 ) -> pd.DataFrame:
 
     results = []
@@ -312,13 +324,12 @@ def compute_distances(
     return df_result
 
 
-
 def run_for_dataset(
     dataset_name: str,
     path1: str | Path,
     path2: str | Path,
-    path3: str | Path | None,   # golden peut être None
-    embedding_model: str,       # "bert", "distilbert", "bart", ou checkpoint complet
+    path3: str | Path | None,  # golden peut être None
+    embedding_model: str,  # "bert", "distilbert", "bart", ou checkpoint complet
     out_dir: str | Path = HERE.parent[3] / "MetaMatch/tests/results_meta_space",
     n_samples_per_col: int = 20,
     category: str = "DefaultCategory",
@@ -342,7 +353,9 @@ def run_for_dataset(
     emb_src = embed_texts(texts_src, model_name=model_ckpt, device=device, normalize=True)
     emb_tgt = embed_texts(texts_tgt, model_name=model_ckpt, device=device, normalize=True)
 
-    inter_csv = out_dir / f"inter_{dataset_name}__{relation}__{Path(path1).stem}__{Path(path2).stem}__{embedding_model}.csv"
+    inter_csv = (
+        out_dir / f"inter_{dataset_name}__{relation}__{Path(path1).stem}__{Path(path2).stem}__{embedding_model}.csv"
+    )
     df_features = compute_distances(
         embedd_ds1=emb_src,
         embedd_ds2=emb_tgt,
@@ -361,23 +374,45 @@ def run_for_dataset(
     return df_features
 
 
-
 if __name__ == "__main__":
     DATASET = "amazon_google_exp"
-    PATH1 = str(ROOT/ "Experimentation"/"Datasets"/"Magellan"/"Unionable"/"amazon_google_exp"/"amazon_google_exp_source.csv")
-    PATH2 = str(ROOT/ "Experimentation"/"Datasets"/"Magellan"/"Unionable"/"amazon_google_exp"/"amazon_google_exp_target.csv")
-    PATH3 =  str(ROOT/ "Experimentation"/"Datasets"/"Magellan"/"Unionable"/"amazon_google_exp"/"amazon_google_exp_mapping.json")
+    PATH1 = str(
+        ROOT
+        / "Experimentation"
+        / "Datasets"
+        / "Magellan"
+        / "Unionable"
+        / "amazon_google_exp"
+        / "amazon_google_exp_source.csv"
+    )
+    PATH2 = str(
+        ROOT
+        / "Experimentation"
+        / "Datasets"
+        / "Magellan"
+        / "Unionable"
+        / "amazon_google_exp"
+        / "amazon_google_exp_target.csv"
+    )
+    PATH3 = str(
+        ROOT
+        / "Experimentation"
+        / "Datasets"
+        / "Magellan"
+        / "Unionable"
+        / "amazon_google_exp"
+        / "amazon_google_exp_mapping.json"
+    )
 
     _ = run_for_dataset(
         dataset_name=DATASET,
         path1=PATH1,
         path2=PATH2,
-        path3=PATH3,                 
+        path3=PATH3,
         embedding_model="all-MiniLM-L6-v2",  # ou "bert", "distilbert", etc.
         out_dir=HERE.parent[3] / "MetaMatch/tests/results_meta_space",
         n_samples_per_col=20,
         category="Magellan",
         relation="src→tgt",
-        device=None,                 # "cuda" si tu veux forcer le GPU
+        device=None,  # "cuda" si tu veux forcer le GPU
     )
-

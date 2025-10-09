@@ -1,5 +1,6 @@
 # embed_utils.py
 from __future__ import annotations
+
 from typing import Dict, List, Optional
 
 import numpy as np
@@ -71,8 +72,13 @@ def embed_texts(
 
     embs = []
     for start in range(0, len(texts), batch_size):
-        chunk = texts[start:start + batch_size]
-        E = model.encode(chunk, convert_to_numpy=True, show_progress_bar=False, normalize_embeddings=False)
+        chunk = texts[start : start + batch_size]
+        E = model.encode(
+            chunk,
+            convert_to_numpy=True,
+            show_progress_bar=False,
+            normalize_embeddings=False,
+        )
         embs.append(E)
     X = np.vstack(embs) if embs else np.zeros((0, 384), dtype="float32")  # fallback dim
 

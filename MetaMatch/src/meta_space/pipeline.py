@@ -1,12 +1,12 @@
 # pipeline.py
 from __future__ import annotations
+
+import sys
 import time
 from pathlib import Path
 from typing import Optional
-import sys
 
 import click
-import numpy as np
 import pandas as pd
 
 HERE = Path(__file__).resolve()
@@ -14,21 +14,17 @@ ROOT = HERE.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from meta_features.spectral_features import compute_spectral_metrics_for_all
-from meta_features.topology_features import compute_topological_metrics, vector_to_point_cloud
-from meta_features.classical_distances import compute_classical_distances
-from meta_features.syntax_string_features import compute_syntax_string_features
 
-from golden_tools import (
-    golden_matrix_s1xs2,
-    golden_matrix_s1xs1,
-    _non_index_columns,
-)
-from embed_utils import (
-    build_column_texts,
-    pick_model_checkpoint,
-    embed_texts,
-)
+from pathlib import Path
+
+Root_project = Path(__file__).resolve().parents[2]
+
+from embed_utils import build_column_texts, embed_texts, pick_model_checkpoint
+from golden_tools import _non_index_columns, golden_matrix_s1xs2
+from meta_features.classical_distances import compute_classical_distances
+from meta_features.spectral_features import compute_spectral_metrics_for_all
+from meta_features.syntax_string_features import compute_syntax_string_features
+from meta_features.topology_features import compute_topological_metrics, vector_to_point_cloud
 
 
 def read_csv_any(path: str | Path) -> pd.DataFrame:
@@ -123,11 +119,40 @@ def compute_distances(
 
 @click.command(name="MetaMatch", context_settings={"show_default": True})
 @click.option("--dataset", required=True, help="Dataset name for bookkeeping.")
-@click.option("--source-csv", "source_csv", required=True, type=click.Path(exists=True, dir_okay=False), help="Path to source CSV (S1).")
-@click.option("--target-csv", "target_csv", required=True, type=click.Path(exists=True, dir_okay=False), help="Path to target CSV (S2).")
-@click.option("--golden-json", "golden_json", required=False, type=click.Path(exists=True, dir_okay=False), help="Path to golden JSON.")
-@click.option("--model", "model_alias", default="all-MiniLM-L6-v2", help="Embedding model alias or HF checkpoint.")
-@click.option("--out-dir", "out_dir", default="MetaMatch/tests/results_meta_space", type=click.Path(file_okay=False), help="Output directory.")
+@click.option(
+    "--source-csv",
+    "source_csv",
+    required=True,
+    type=click.Path(exists=True, dir_okay=False),
+    help="Path to source CSV (S1).",
+)
+@click.option(
+    "--target-csv",
+    "target_csv",
+    required=True,
+    type=click.Path(exists=True, dir_okay=False),
+    help="Path to target CSV (S2).",
+)
+@click.option(
+    "--golden-json",
+    "golden_json",
+    required=False,
+    type=click.Path(exists=True, dir_okay=False),
+    help="Path to golden JSON.",
+)
+@click.option(
+    "--model",
+    "model_alias",
+    default="all-MiniLM-L6-v2",
+    help="Embedding model alias or HF checkpoint.",
+)
+@click.option(
+    "--out-dir",
+    "out_dir",
+    default=Root_project / "tests/results_meta_space",
+    type=click.Path(file_okay=False),
+    help="Output directory.",
+)
 def meta_match(
     dataset: str,
     source_csv: str,
@@ -159,7 +184,9 @@ def meta_match(
     else:
         G = pd.DataFrame()
 
-    inter_csv = out_path / f"inter_{dataset}__{Path(source_csv).stem}__{Path(target_csv).stem}__{Path(model_ckpt).name}.csv"
+    inter_csv = (
+        out_path / f"inter_{dataset}__{Path(source_csv).stem}__{Path(target_csv).stem}__{Path(model_ckpt).name}.csv"
+    )
     df_features = compute_distances(
         embedd_ds1=emb_src,
         embedd_ds2=emb_tgt,

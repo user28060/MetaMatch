@@ -1,10 +1,10 @@
 # golden_cli.py
 from __future__ import annotations
-from pathlib import Path
-import click
-import pandas as pd
 
-from golden_tools import golden_matrix_s1xs2, golden_matrix_s1xs1, _non_index_columns
+from pathlib import Path
+
+import click
+from golden_tools import _non_index_columns, golden_matrix_s1xs1, golden_matrix_s1xs2
 from pipeline import read_csv_any
 
 
@@ -20,7 +20,11 @@ def main(source_csv: str, target_csv: str, golden_json: str, s1xs1: bool, out_cs
     df_tgt = read_csv_any(target_csv)
     src_attrs = _non_index_columns(df_src)
     tgt_attrs = _non_index_columns(df_tgt)
-    G = golden_matrix_s1xs1(golden_json, src_attrs, tgt_attrs) if s1xs1 else golden_matrix_s1xs2(golden_json, src_attrs, tgt_attrs)
+    G = (
+        golden_matrix_s1xs1(golden_json, src_attrs, tgt_attrs)
+        if s1xs1
+        else golden_matrix_s1xs2(golden_json, src_attrs, tgt_attrs)
+    )
     Path(out_csv).parent.mkdir(parents=True, exist_ok=True)
     G.to_csv(out_csv, index=True)
     click.echo(f"[OK] Golden matrix saved to: {out_csv}")

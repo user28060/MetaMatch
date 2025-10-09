@@ -1,9 +1,10 @@
 # golden_tools.py
 from __future__ import annotations
+
 import json
 import re
 from pathlib import Path
-from typing import Iterable, List, Tuple, Union
+from typing import Iterable, Union
 
 import numpy as np
 import pandas as pd
@@ -21,9 +22,7 @@ def _non_index_columns(df: pd.DataFrame) -> list[str]:
     return [c for c in cols if _norm(c) not in drop_like]
 
 
-def load_golden_as_df(
-    golden: Union[str, Path, list, dict, pd.DataFrame]
-) -> pd.DataFrame:
+def load_golden_as_df(golden: Union[str, Path, list, dict, pd.DataFrame]) -> pd.DataFrame:
     """Load a “matches” mapping into a flattened DataFrame.
 
     Accepts a JSON path, already-loaded list/dict, or a DataFrame.
@@ -65,14 +64,38 @@ def golden_matrix_s1xs2(
 
     map_df = load_golden_as_df(golden_map)
     if map_df.empty:
-        return pd.DataFrame(np.zeros((len(src_attrs), len(tgt_attrs)), dtype=int),
-                            index=src_attrs, columns=tgt_attrs)
+        return pd.DataFrame(
+            np.zeros((len(src_attrs), len(tgt_attrs)), dtype=int),
+            index=src_attrs,
+            columns=tgt_attrs,
+        )
 
-    c_src = _pick_col(map_df, "source_column", "source", "src", "left", "s", "source_attr", "source_name")
-    c_tgt = _pick_col(map_df, "target_column", "target", "tgt", "right", "t", "target_attr", "target_name")
+    c_src = _pick_col(
+        map_df,
+        "source_column",
+        "source",
+        "src",
+        "left",
+        "s",
+        "source_attr",
+        "source_name",
+    )
+    c_tgt = _pick_col(
+        map_df,
+        "target_column",
+        "target",
+        "tgt",
+        "right",
+        "t",
+        "target_attr",
+        "target_name",
+    )
     if c_src is None or c_tgt is None:
-        return pd.DataFrame(np.zeros((len(src_attrs), len(tgt_attrs)), dtype=int),
-                            index=src_attrs, columns=tgt_attrs)
+        return pd.DataFrame(
+            np.zeros((len(src_attrs), len(tgt_attrs)), dtype=int),
+            index=src_attrs,
+            columns=tgt_attrs,
+        )
 
     src_pos = {s.strip(): i for i, s in enumerate(src_attrs)}
     tgt_pos = {t.strip(): j for j, t in enumerate(tgt_attrs)}
@@ -117,14 +140,38 @@ def golden_matrix_s1xs1(
 
     map_df = load_golden_as_df(golden_map)
     if map_df.empty:
-        return pd.DataFrame(np.zeros((len(src_attrs), len(src_attrs)), dtype=int),
-                            index=src_attrs, columns=src_attrs)
+        return pd.DataFrame(
+            np.zeros((len(src_attrs), len(src_attrs)), dtype=int),
+            index=src_attrs,
+            columns=src_attrs,
+        )
 
-    c_src = _pick_col(map_df, "source_column", "source", "src", "left", "s", "source_attr", "source_name")
-    c_tgt = _pick_col(map_df, "target_column", "target", "tgt", "right", "t", "target_attr", "target_name")
+    c_src = _pick_col(
+        map_df,
+        "source_column",
+        "source",
+        "src",
+        "left",
+        "s",
+        "source_attr",
+        "source_name",
+    )
+    c_tgt = _pick_col(
+        map_df,
+        "target_column",
+        "target",
+        "tgt",
+        "right",
+        "t",
+        "target_attr",
+        "target_name",
+    )
     if c_src is None or c_tgt is None:
-        return pd.DataFrame(np.zeros((len(src_attrs), len(src_attrs)), dtype=int),
-                            index=src_attrs, columns=src_attrs)
+        return pd.DataFrame(
+            np.zeros((len(src_attrs), len(src_attrs)), dtype=int),
+            index=src_attrs,
+            columns=src_attrs,
+        )
 
     pairs = set()
     for r in map_df.itertuples(index=False):

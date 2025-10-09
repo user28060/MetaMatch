@@ -1,16 +1,20 @@
 # Meta_learner/train.py
 from __future__ import annotations
+
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional
 
 import click
 import joblib
 import numpy as np
 import pandas as pd
-
 from sklearn.base import clone
 from sklearn.compose import ColumnTransformer
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.impute import SimpleImputer
+
+# Core classifiers (always available if scikit-learn is installed)
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
     f1_score,
@@ -20,25 +24,25 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-
-# Core classifiers (always available if scikit-learn is installed)
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.svm import SVC
 
-# Optional: CatBoost / XGBoost if installed
+ROOT = Path(__file__).resolve().parents[2]
+
+
 try:
     from catboost import CatBoostClassifier  # type: ignore
+
     _HAS_CATBOOST = True
 except Exception:
     _HAS_CATBOOST = False
 
 try:
     from xgboost import XGBClassifier  # type: ignore
+
     _HAS_XGB = True
 except Exception:
     _HAS_XGB = False
@@ -84,9 +88,7 @@ def make_xy(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     return X, y
 
 
-def split_by_dataset(
-    df: pd.DataFrame, train_fraction: float, seed: int
-) -> np.ndarray:
+def split_by_dataset(df: pd.DataFrame, train_fraction: float, seed: int) -> np.ndarray:
     """Return a boolean mask of rows for training, stratified by Dataset IDs."""
     if "Dataset" not in df.columns:
         # fallback: random split handled by train_test_split later
@@ -142,15 +144,16 @@ def list_classifiers() -> Dict[str, object]:
         clf["CatBoost"] = CatBoostClassifier(verbose=0, auto_class_weights="Balanced", random_seed=42)
     if _HAS_XGB:
         clf["XGBoost"] = XGBClassifier(
-            use_label_encoder=False, eval_metric="logloss", random_state=42, n_estimators=300, n_jobs=1
+            use_label_encoder=False,
+            eval_metric="logloss",
+            random_state=42,
+            n_estimators=300,
+            n_jobs=1,
         )
     return clf
 
 
-
-def evaluate(
-    y_true: np.ndarray, y_prob: Optional[np.ndarray], y_pred: np.ndarray
-) -> dict:
+def evaluate(y_true: np.ndarray, y_prob: Optional[np.ndarray], y_pred: np.ndarray) -> dict:
     """Compute a compact set of metrics."""
     p, r, f1, _ = precision_recall_fscore_support(y_true, y_pred, average="binary", zero_division=0)
     out = {
@@ -166,7 +169,9 @@ def evaluate(
             out["roc_auc"] = np.nan
     return out
 
+
 # --- keep all your imports and helper functions above ---
+
 
 def get_available_classifiers() -> Dict[str, object]:
     """Return the available classifiers dictionary."""
@@ -182,25 +187,53 @@ def get_available_classifiers() -> Dict[str, object]:
         clf["CatBoost"] = CatBoostClassifier(verbose=0, auto_class_weights="Balanced", random_seed=42)
     if _HAS_XGB:
         clf["XGBoost"] = XGBClassifier(
-            use_label_encoder=False, eval_metric="logloss", random_state=42, n_estimators=300, n_jobs=1
+            use_label_encoder=False,
+            eval_metric="logloss",
+            random_state=42,
+            n_estimators=300,
+            n_jobs=1,
         )
     return clf
 
 
 @click.command(name="MetaLearn", context_settings={"show_default": True})
-@click.option("--features-csv", required=False, type=click.Path(exists=True, dir_okay=False),
-              help="Path to MetaMatch features CSV.")
-@click.option("--classifier", "classifiers", multiple=True,
-              help="One or more classifiers (default: RF). Choices printed by --list-classifiers.")
-@click.option("--list-classifiers", "list_clfs", is_flag=True,
-              help="List available classifier names and exit.")
-@click.option("--split", type=click.Choice(["random", "by-dataset"]), default="by-dataset",
-              help="Train/test split strategy.")
-@click.option("--test-size", default=0.2, type=float,
-              help="Hold-out split size if --split=random or by-dataset.")
+@click.option(
+    "--features-csv",
+    required=False,
+    type=click.Path(exists=True, dir_okay=False),
+    help="Path to MetaMatch features CSV.",
+)
+@click.option(
+    "--classifier",
+    "classifiers",
+    multiple=True,
+    help="One or more classifiers (default: RF). Choices printed by --list-classifiers.",
+)
+@click.option(
+    "--list-classifiers",
+    "list_clfs",
+    is_flag=True,
+    help="List available classifier names and exit.",
+)
+@click.option(
+    "--split",
+    type=click.Choice(["random", "by-dataset"]),
+    default="by-dataset",
+    help="Train/test split strategy.",
+)
+@click.option(
+    "--test-size",
+    default=0.2,
+    type=float,
+    help="Hold-out split size if --split=random or by-dataset.",
+)
 @click.option("--seed", default=42, type=int, help="Random seed.")
-@click.option("--out-dir", default="MetaMatch/tests/results_meta_learner", type=click.Path(file_okay=False),
-              help="Output directory.")
+@click.option(
+    "--out-dir",
+    default=ROOT / "tests/results_meta_learner",
+    type=click.Path(file_okay=False),
+    help="Output directory.",
+)
 def meta_learn(
     features_csv: Optional[str],
     classifiers: tuple[str, ...],
@@ -229,9 +262,7 @@ def meta_learn(
         classifiers = ("RF",)
     for name in classifiers:
         if name not in available:
-            raise click.BadParameter(
-                f"Unknown classifier '{name}'. Use --list-classifiers to see choices."
-            )
+            raise click.BadParameter(f"Unknown classifier '{name}'. Use --list-classifiers to see choices.")
 
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -251,9 +282,7 @@ def meta_learn(
             X_train, X_test = X[mask_train], X[mask_test]
             y_train, y_test = y[mask_train], y[mask_test]
     else:
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=seed, stratify=y
-        )
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=seed, stratify=y)
 
     pre = build_preprocessor(X)
 
@@ -314,7 +343,11 @@ def meta_learn(
 
         # Save predictions and model
         pred_df = pd.DataFrame(
-            {"y_true": y_test.to_numpy(), "y_pred": y_pred, "y_prob": y_prob if y_prob is not None else np.nan}
+            {
+                "y_true": y_test.to_numpy(),
+                "y_pred": y_pred,
+                "y_prob": y_prob if y_prob is not None else np.nan,
+            }
         )
         pred_csv = out / f"predictions__{name}.csv"
         pred_df.to_csv(pred_csv, index=False)

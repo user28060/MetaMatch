@@ -5,6 +5,7 @@ description = ""
 authors = ["user28060 <dbibi.toto@ofjf.com>"]
 readme = "README.md"
 
+# Layout src
 packages = [
   { include = "meta_space",   from = "MetaMatch/src" },
   { include = "Meta_learner", from = "MetaMatch/src" }
@@ -12,7 +13,6 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
-
 numpy = "1.24.4"
 scipy = "1.10.1"
 torch = "2.2.2"
@@ -29,7 +29,7 @@ sentencepiece = ">=0.2.1,<0.3.0"
 nltk = ">=3.9,<4"
 xgboost = ">=2,<3"
 catboost = ">=1.2,<2"
-POT = "^0.9.6.post1"
+POT = ">=0.9.6,<0.10"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"
@@ -38,6 +38,8 @@ isort = "^5.13.2"
 black = "^24.10.0"
 mdformat = "^0.7.21"
 flake8 = "^7.1.1"
+# mypy = "^1.11.2"
+# ruff = "^0.6.9"
 
 [tool.poetry.scripts]
 MetaMatch = "meta_space.pipeline:meta_match"
@@ -46,3 +48,15 @@ MetaLearn = "Meta_learner.train:meta_learn"
 [build-system]
 requires = ["poetry-core>=1.8.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+# ---- outils de format/lint (facultatif) ----
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+line_length = 120
+
+[tool.flake8]
+max-line-length = 120
+extend-ignore = ["E203", "W503"]
