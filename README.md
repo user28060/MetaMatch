@@ -89,7 +89,7 @@ Experimentation/
 ## Installation
 
 ```bash
-git clone <YOUR_REPO_URL> MetaMatch
+git clone https://github.com/user28060/MetaMatch.git
 cd MetaMatch
 
 # (optional) pin Python 3.11 for the venv
